@@ -6,6 +6,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <typeinfo>
 #include <utility>
 #include <vector>
@@ -13,8 +14,8 @@
 class ExpectationViolation : public std::runtime_error
 {
 public:
-  static constexpr std::string boolstr( bool b ) { return b ? "true" : "false"; }
-
+  // static constexpr std::string boolstr( bool b ) { return b ? "true" : "false"; }
+  static std::string boolstr( bool b ) { return b ? "true" : "false"; }
   explicit ExpectationViolation( const std::string& msg ) : std::runtime_error( msg ) {}
 
   template<typename T>
