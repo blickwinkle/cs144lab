@@ -22,7 +22,6 @@ void Writer::push( string data )
   for (auto c : data) {
     buffer_.push(c);
   }
-  return;
 }
 
 void Writer::close()
