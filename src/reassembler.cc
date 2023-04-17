@@ -25,6 +25,10 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
   if (eofsize_ != UINT64_MAX && first_index + data.length() > eofsize_) {
     data = data.substr(0, eofsize_ - first_index);
   }
+  // 如果first_index已经超过了output的可用容量，那么直接返回
+  if (first_index > output.available_capacity() + output.bytes_pushed()) {
+    return;
+  }
   // 如果数据的大小超过了output的可用容量，那么取到output的可用容量为止的数据
   if (first_index + data.length() > output.available_capacity() + output.bytes_pushed()) {
     data = data.substr(0, output.available_capacity() + output.bytes_pushed() - first_index);
