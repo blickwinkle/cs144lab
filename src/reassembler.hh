@@ -34,7 +34,7 @@ public:
   // How many bytes are stored in the Reassembler itself?
   uint64_t bytes_pending() const;
 private:
-  std::map<uint64_t, std::string> buffer_;
+  std::map<uint64_t, std::string> buffer_{};
   uint64_t eofsize_ = UINT64_MAX;
   uint64_t bytes_written_ = 0;
   uint64_t bytes_pending_ = 0;

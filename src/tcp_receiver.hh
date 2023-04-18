@@ -3,6 +3,7 @@
 #include "reassembler.hh"
 #include "tcp_receiver_message.hh"
 #include "tcp_sender_message.hh"
+#include "wrapping_integers.hh"
 
 class TCPReceiver
 {
@@ -15,4 +16,8 @@ public:
 
   /* The TCPReceiver sends TCPReceiverMessages back to the TCPSender. */
   TCPReceiverMessage send( const Writer& inbound_stream ) const;
+private:
+  Wrap32 zero_point{0};
+  bool has_syn = false;
+  bool has_fin = false;
 };
