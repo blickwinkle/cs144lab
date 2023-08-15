@@ -8,6 +8,15 @@ class TCPSender
 {
   Wrap32 isn_;
   uint64_t initial_RTO_ms_;
+  uint64_t RTO_ms_;
+  uint64_t retransmission_timeout_counter_;
+  uint64_t consecutive_retransmissions_;
+  uint64_t last_ack_received_;
+  uint64_t last_seqno_sent_;
+  uint64_t last_window_size_;
+  bool needRetransmission_;
+  TCPSenderMessage message_;
+  std::string buffer_;
 
 public:
   /* Construct TCP sender with given default Retransmission Timeout and possible ISN */
@@ -32,3 +41,4 @@ public:
   uint64_t sequence_numbers_in_flight() const;  // How many sequence numbers are outstanding?
   uint64_t consecutive_retransmissions() const; // How many consecutive *re*transmissions have happened?
 };
+
