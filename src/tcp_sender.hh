@@ -4,26 +4,45 @@
 #include "tcp_receiver_message.hh"
 #include "tcp_sender_message.hh"
 
+class TCPTimer
+{
+private:
+  bool isStart_;
+  uint64_t outTime_;
+  uint64_t expirTime_;
+
+public:
+  inline bool isTiming() const { return isStart_; }
+  inline void start( uint64_t outTime ) { outTime_ = outTime, expirTime_ = 0, isStart_ = true; }
+  inline bool isExpir() const { return isTiming() && expirTime_ >= outTime_; }
+  inline void addTime( uint64_t time )
+  {
+    if ( !isTiming() ) {
+      return;
+    }
+    expirTime_ += time;
+  }
+  inline void close() { isStart_ = false, outTime_ = expirTime_ = 0; }
+};
+
 class TCPSender
 {
   struct
   {
     uint64_t last_ack_received_;
     uint64_t last_ack_window_size_;
-    bool has_ack_syn_;
-    bool has_ack_fin_;
   } ack_record_;
-  uint64_t last_seqno_sent_;
+  std::queue<TCPSenderMessage> msg_;
   Wrap32 isn_;
   uint64_t initial_RTO_ms_;
   uint64_t RTO_ms_;
-  uint64_t retransmission_timeout_counter_;
+  TCPTimer timer_;
   uint64_t consecutive_retransmissions_;
 
-  uint64_t local_buffer_idx_;
-  bool needRetransmission_;
+  // bool needRetransmission_;
   std::string buffer_;
   TCPSenderMessage construct_message( uint64_t seqno, uint64_t size, bool is_syn, bool is_fin ) const;
+  uint64_t calc_remain_wsize() const;
   void GC_buffer();
 
 public:
