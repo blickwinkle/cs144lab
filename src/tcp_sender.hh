@@ -38,12 +38,25 @@ class TCPSender
   uint64_t RTO_ms_;
   TCPTimer timer_;
   uint64_t consecutive_retransmissions_;
-
+  bool isFinish_;
   bool needRetransmission_;
+  bool isClose_; // 拒绝发送新包
   std::string buffer_;
   TCPSenderMessage construct_message( uint64_t seqno, uint64_t size, bool is_syn, bool is_fin ) const;
   uint64_t calc_remain_wsize() const;
   void GC_buffer();
+  bool isZeroWS_;
+
+  inline void setWS( const uint64_t ws )
+  {
+    if ( ws == 0 ) {
+      this->isZeroWS_ = true;
+      this->ack_record_.last_ack_window_size_ = 1;
+    } else {
+      this->isZeroWS_ = false;
+      this->ack_record_.last_ack_window_size_ = ws;
+    }
+  }
 
 public:
   /* Construct TCP sender with given default Retransmission Timeout and possible ISN */
