@@ -4,6 +4,7 @@
 #include "ethernet_frame.hh"
 #include "ipv4_datagram.hh"
 
+#include <cstdint>
 #include <iostream>
 #include <list>
 #include <optional>
@@ -40,14 +41,26 @@ private:
 
   // IP (known as Internet-layer or network-layer) address of the interface
   Address ip_address_;
-
-public:
+  const uint64_t arq_req_timeout_ = 5 * 1000;    // 5s
+  const uint64_t arq_cache_timeout_ = 30 * 1000; // 30s
+  uint64_t time;
+  struct ArpResponse
+  {
+    bool work = false;
+    uint64_t time = 0;
+    EthernetAddress addr;
+    bool sended = false;
+  };
+  // Mapping from IP address to Ethernet address
+  std::unordered_map<uint32_t, ArpResponse> arp_cache_;
+  std::list<std::pair<EthernetFrame, std::optional<Address>>> buffer_;
   // Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer)
   // addresses
   NetworkInterface( const EthernetAddress& ethernet_address, const Address& ip_address );
 
   // Access queue of Ethernet frames awaiting transmission
   std::optional<EthernetFrame> maybe_send();
+  void gc();
 
   // Sends an IPv4 datagram, encapsulated in an Ethernet frame (if it knows the Ethernet destination
   // address). Will need to use [ARP](\ref rfc::rfc826) to look up the Ethernet destination address
