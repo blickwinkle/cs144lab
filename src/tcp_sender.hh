@@ -39,7 +39,7 @@ class TCPSender
   TCPTimer timer_;
   uint64_t consecutive_retransmissions_;
 
-  // bool needRetransmission_;
+  bool needRetransmission_;
   std::string buffer_;
   TCPSenderMessage construct_message( uint64_t seqno, uint64_t size, bool is_syn, bool is_fin ) const;
   uint64_t calc_remain_wsize() const;

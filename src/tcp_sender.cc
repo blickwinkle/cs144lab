@@ -20,6 +20,7 @@ TCPSender::TCPSender( uint64_t initial_RTO_ms, optional<Wrap32> fixed_isn )
   , RTO_ms_( initial_RTO_ms )
   , timer_()
   , consecutive_retransmissions_( 0 )
+  , needRetransmission_( false )
   , buffer_()
 {}
 
@@ -47,17 +48,8 @@ uint64_t TCPSender::consecutive_retransmissions() const
 optional<TCPSenderMessage> TCPSender::maybe_send()
 {
   // Your code here.
-  if ( this->timer_.isExpir() ) {
-    if ( this->calc_remain_wsize() != 0 ) {
-      this->consecutive_retransmissions_++;
-      this->RTO_ms_ *= 2;
-    }
-    if ( this->consecutive_retransmissions_ > TCPConfig::MAX_RETX_ATTEMPTS ) {
-      return {};
-    }
-
-    this->timer_.close();
-    this->timer_.start( this->RTO_ms_ );
+  if ( needRetransmission_ ) {
+    needRetransmission_ = false;
     return this->msg_.front();
   }
   uint64_t seqNo = this->msg_.empty()
@@ -120,7 +112,7 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
   this->ack_record_.last_ack_window_size_ = msg.window_size;
   this->consecutive_retransmissions_ = 0;
   this->RTO_ms_ = this->initial_RTO_ms_;
-
+  this->timer_.close();
   this->GC_buffer();
   if ( !this->msg_.empty() ) {
     this->timer_.start( this->RTO_ms_ );
@@ -132,6 +124,15 @@ void TCPSender::tick( const size_t ms_since_last_tick )
 {
   // Your code here.
   this->timer_.addTime( ms_since_last_tick );
+  if ( timer_.isExpir() ) {
+    if ( this->calc_remain_wsize() != 0 ) {
+      this->consecutive_retransmissions_++;
+      this->RTO_ms_ *= 2;
+    }
+    this->timer_.close();
+    this->timer_.start( this->RTO_ms_ );
+    this->needRetransmission_ = true;
+  }
   return;
 }
 
