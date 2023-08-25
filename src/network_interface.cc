@@ -33,6 +33,9 @@ NetworkInterface::NetworkInterface( const EthernetAddress& ethernet_address, con
 // Address::ipv4_numeric() method.
 void NetworkInterface::send_datagram( const InternetDatagram& dgram, const Address& next_hop )
 {
+  if ( dgram.header.dst == 0 ) {
+    cerr << "DEBUG: Interface need send TCP packet which dst is 0" << endl;
+  }
   EthernetFrame frame {
     .header { .dst = ETHERNET_BROADCAST, .src = this->ethernet_address_, .type = EthernetHeader::TYPE_IPv4 },
     .payload = serialize( dgram ) };
