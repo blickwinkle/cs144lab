@@ -48,12 +48,49 @@ public:
   }
 };
 
+class RouterRule
+{
+private:
+  uint32_t route_prefix_;
+  uint8_t prefix_length_;
+  std::optional<Address> next_hop_;
+  size_t interface_num_;
+
+public:
+  RouterRule( const uint32_t route_prefix,
+              const uint8_t prefix_length,
+              const std::optional<Address> next_hop,
+              const size_t interface_num )
+    : route_prefix_( route_prefix )
+    , prefix_length_( prefix_length )
+    , next_hop_( next_hop )
+    , interface_num_( interface_num )
+  {}
+
+  inline uint32_t route_prefix() const { return route_prefix_; }
+  inline uint8_t prefix_length() const { return prefix_length_; }
+  inline std::optional<Address> next_hop() const { return next_hop_; }
+  inline size_t interface_num() const { return interface_num_; }
+
+  inline bool is_match( const uint32_t ip ) const
+  {
+    uint32_t mask = 0xffffffff;
+    if ( prefix_length_ != 0 )
+      mask <<= ( 32 - prefix_length_ );
+    else
+      mask = 0;
+    return ( ip & mask ) == ( route_prefix_ & mask );
+  }
+};
+
 // A router that has multiple network interfaces and
 // performs longest-prefix-match routing between them.
+
 class Router
 {
   // The router's collection of network interfaces
   std::vector<AsyncNetworkInterface> interfaces_ {};
+  std::vector<RouterRule> rules_ {};
 
 public:
   // Add an interface to the router
