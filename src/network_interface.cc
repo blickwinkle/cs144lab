@@ -56,8 +56,8 @@ optional<InternetDatagram> NetworkInterface::recv_frame( const EthernetFrame& fr
     if ( !m.supported() ) {
       return {};
     }
-    this->arp_cache_[m.sender_ip_address]
-      = NetworkInterface::ArpResponse { .work = true, .time = this->time, .addr = m.sender_ethernet_address };
+    this->arp_cache_[m.sender_ip_address] = ArpResponse( true, this->time, m.sender_ethernet_address, false );
+    // = ArpResponse { .work = true, .time = this->time, .addr = m.sender_ethernet_address, .sended = false };
     if ( this->ip_address_.ipv4_numeric() != m.target_ip_address || frame.header.dst != ETHERNET_BROADCAST ) {
       return {};
     }
@@ -65,6 +65,7 @@ optional<InternetDatagram> NetworkInterface::recv_frame( const EthernetFrame& fr
                      .sender_ip_address = this->ip_address_.ipv4_numeric(),
                      .target_ethernet_address = frame.header.src,
                      .target_ip_address = m.sender_ip_address };
+    res.opcode = ARPMessage::OPCODE_REPLY;
     EthernetFrame send_frame {
       .header { .dst = frame.header.src, .src = this->ethernet_address_, .type = EthernetHeader::TYPE_ARP },
       .payload = serialize( res ) };
@@ -111,15 +112,16 @@ optional<EthernetFrame> NetworkInterface::maybe_send()
       this->buffer_.erase( iter );
       return m;
     } else if ( this->arp_cache_[iter->second->ipv4_numeric()].sended
-                && this->arp_cache_[iter->second->ipv4_numeric()].time - this->time < this->arq_req_timeout_ ) {
+                && this->time - this->arp_cache_[iter->second->ipv4_numeric()].time < this->arq_req_timeout_ ) {
       continue;
     } else {
       ARPMessage req { .sender_ethernet_address = this->ethernet_address_,
                        .sender_ip_address = this->ip_address_.ipv4_numeric(),
-                       .target_ethernet_address = ETHERNET_BROADCAST,
+                       .target_ethernet_address = {},
                        .target_ip_address = iter->second->ipv4_numeric() };
-      this->arp_cache_[iter->second->ipv4_numeric()]
-        = { .work = false, .time = this->time, .addr = ETHERNET_BROADCAST, .sended = true };
+      req.opcode = ARPMessage::OPCODE_REQUEST;
+      this->arp_cache_[iter->second->ipv4_numeric()] = ArpResponse( false, this->time, ETHERNET_BROADCAST, true );
+      // { .work = false, .time = this->time, .addr = ETHERNET_BROADCAST, .sended = true };
 
       return EthernetFrame {
         .header { .dst = ETHERNET_BROADCAST, .src = this->ethernet_address_, .type = EthernetHeader::TYPE_ARP },
